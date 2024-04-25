@@ -48,15 +48,12 @@ jobs:
           echo "::set-output name=message::Rebase failed. Please resolve conflicts manually."
 
       - name: Comment on Pull Request
-        uses: actions/github-script@0.9.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const message = process.env['MESSAGE'];
-            const context = github.context;
-            const octokit = new github.GitHub(process.env['GITHUB_TOKEN']);
-            octokit.issues.createComment({
-              ...context.repo,
-              issue_number: context.issue.number,
-              body: message
-            });
+        if: ${{ steps.rebase.outputs.status == 'success' || steps.rebase.outputs.status == 'failure' }}
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"body": "'"$MESSAGE"'"}' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${{ github.event.issue.number }}/comments"
+        env:
+          MESSAGE: ${{ steps.rebase.outputs.message }}
