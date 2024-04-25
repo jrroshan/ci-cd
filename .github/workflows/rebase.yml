@@ -31,29 +31,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check Rebase Status
-        if: ${{ steps.rebase.outputs.status == 'failure' }}
-        run: exit 1
+      - name: Notify
+        if: failure()
+        with:
+          message: 'Nice its Failed'
 
-      - name: Post Success Message
-        if: ${{ steps.rebase.outputs.status == 'success' }}
-        run: |
-          echo "Rebase successful!"
-          echo "::set-output name=message::Rebase successful!"
-
-      - name: Post Failure Message
-        if: ${{ steps.rebase.outputs.status == 'failure' }}
-        run: |
-          echo "Rebase failed. Please resolve conflicts manually."
-          echo "::set-output name=message::Rebase failed. Please resolve conflicts manually."
-
-      - name: Comment on Pull Request
-        if: ${{ steps.rebase.outputs.status == 'success' || steps.rebase.outputs.status == 'failure' }}
-        run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"body": "'"$MESSAGE"'"}' \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${{ github.event.issue.number }}/comments"
-        env:
-          MESSAGE: ${{ steps.rebase.outputs.message }}
+      - name: Notify
+        if: success()
+        with:
+          message: 'Nice tis success'
