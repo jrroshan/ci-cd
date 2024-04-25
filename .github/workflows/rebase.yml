@@ -30,13 +30,7 @@ jobs:
         uses: cirrus-actions/rebase@1.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Notify
-        if: failure()
-        with:
-          message: 'Nice its Failed'
-
-      - name: Notify
-        if: success()
-        with:
-          message: 'Nice tis success'
+          success: 'nice'
+          failure: 'not nice'
+          success_message: 'Success! Fast forwarded'
+          failure_message: 'Failed! Cannot do fast forward!'
