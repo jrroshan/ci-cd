@@ -16,11 +16,24 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Check for Changes
+        id: changes
+        run: |
+          git fetch origin
+          base=$(jq -r '.issue.pull_request.base.ref' "$GITHUB_EVENT_PATH")
+          head=$(jq -r '.issue.pull_request.head.ref' "$GITHUB_EVENT_PATH")
+          git diff --quiet origin/$base origin/$head && echo "::set-output name=changed::false" || echo "::set-output name=changed::true"
+
       - name: Automatic Rebase
+        if: ${{ steps.changes.outputs.changed == 'true' }}
         id: rebase
         uses: cirrus-actions/rebase@1.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Rebase Status
+        if: ${{ steps.rebase.outputs.status == 'failure' }}
+        run: exit 1
 
       - name: Post Success Message
         if: ${{ steps.rebase.outputs.status == 'success' }}
@@ -28,8 +41,13 @@ jobs:
           echo "Rebase successful!"
           echo "::set-output name=message::Rebase successful!"
 
+      - name: Post Failure Message
+        if: ${{ steps.rebase.outputs.status == 'failure' }}
+        run: |
+          echo "Rebase failed. Please resolve conflicts manually."
+          echo "::set-output name=message::Rebase failed. Please resolve conflicts manually."
+
       - name: Comment on Pull Request
-        if: ${{ steps.rebase.outputs.status == 'success' }}
         uses: actions/github-script@0.9.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -42,4 +60,3 @@ jobs:
               issue_number: context.issue.number,
               body: message
             });
-
