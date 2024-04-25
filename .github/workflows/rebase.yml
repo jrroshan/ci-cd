@@ -21,5 +21,8 @@ jobs:
         uses: cirrus-actions/rebase@1.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          success_message: 'Success! Merge ***target_base*** to ***source_head***!'
-          failure_message: 'Cannot do automatic Merge'
+      - name: Post Success Message
+        if: success()
+        run: |
+          echo "Rebase successful!"
+          echo "::set-output name=message::Rebase successful!"
